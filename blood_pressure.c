@@ -9,9 +9,9 @@ int main(void)
 {
     int n;
 
-    printf("Kolik mereni chces zadat? ");
+    printf("Kolik meření chceš zadat? ");
     if (scanf("%d", &n) != 1 || n <= 0 || n > 100) {
-        printf("Neplatny pocet (1..100).\n");
+        printf("Neplatný počet (1..100).\n");
         return 1;
     }
 
@@ -19,11 +19,11 @@ int main(void)
     int dias[100];
 
     for (int i = 0; i < n; i++) {
-        printf("Zadej SYS a DIAS pro den %d (napr. 128 82): ", i+1);
-        if (scanf("%d %d", &sys[i], &dias[i]) != 2) {
-            printf("Neplatny vstup. Zkus to znovu.\n");
+        printf("Zadej SYS a DIAS pro den %d (ve formátu: 128/82): ", i+1);
+        if (scanf("%d/%d", &sys[i], &dias[i]) != 2) {
+            printf("Neplatný vstup. Zkus to znovu.\n");
             clear_stdin();
-            i--; 
+            i--;
             continue;
         }
 
@@ -31,20 +31,44 @@ int main(void)
         if (dias[i] < 30) dias[i] = 30;
     }
 
-    printf("\n=== Vysledky ===\n");
+    int count[5] = {0,0,0,0,0};
+
+    printf("\n=== Výsledky ===\n");
     for (int i = 0; i < n; i++) {
-        printf("Den %02d: %3d/%3d mmHg -> ", i+1, sys[i], dias[i]);
+        printf("Den %02d: %3d/%d mmHg -> ", i+1, sys[i], dias[i]);
 
 
-        if (sys[i] >= 140 || dias[i] >= 90) {
-            printf("Hypertension\n");
+        if (sys[i] >= 180 || dias[i] >= 110) {
+            printf("III. stupeň hypertenze\n");
+            count[4]++;
+
+        } else if ((sys[i] >= 160 && sys[i] <= 179) ||
+                   (dias[i] >= 100  && dias[i] <= 109)) {
+            printf("II.stupeň hypertenze\n");
+            count[3]++;
+
+        } else if ((sys[i] >= 140 && sys[i] <= 159) ||
+                   (dias[i] >= 90 && sys[i] <= 99)) {
+            printf("I.stupeň hypertenze\n");
+            count[2]++;
+
         } else if ((sys[i] >= 130 && sys[i] <= 139) ||
-                   (dias[i] >= 85  && dias[i] <= 89)) {
-            printf("High-normal\n");
+                    (dias[i] >= 85 && sys[i] <= 89)) {
+            printf("Vysoký normální tlak\n");
+            count[1]++;
+
         } else {
-            printf("Normal\n");
+            printf("Normalní tlak\n");
+            count[0]++;
         }
     }
+
+    printf("\n === Souhrn měření === \n");
+    printf("Normální tlak: %d\n",          count[0]);
+    printf("Vysoký normální tlak: %d\n",   count[1]);
+    printf("I. stupeň hypertenze: %d\n",   count[2]);
+    printf("II. stupeň hypertenze: %d\n",  count[3]);
+    printf("III. stupeň hypertenze: %d\n", count[4]);
 
     return 0;
 }
