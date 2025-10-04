@@ -1,27 +1,52 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
 
 void clear_stdin(void) {
     int ch;
     while ((ch = getchar()) != '\n' && ch != EOF) { }
 }
 
+// PP
+int pulse_pressure(int sys, int dias) {
+    int pp = sys - dias;
+    return pp < 0 ? 0 : pp;
+}
+
+// MAP
+double mean_arterial_pressure(int sys, int dias) {
+    return (sys + 2.0 * dias) / 3.0;
+}
+
 int main(void)
 {
     int n;
 
-    printf("Kolik meření chceš zadat? ");
+    printf("How many measurements do you want to enter? ");
     if (scanf("%d", &n) != 1 || n <= 0 || n > 100) {
-        printf("Neplatný počet (1..100).\n");
+        printf("Invalid number (1..100).\n");
         return 1;
     }
 
     int sys[100];
     int dias[100];
+    int hr[100] = {0};
 
     for (int i = 0; i < n; i++) {
-        printf("Zadej SYS a DIAS pro den %d (ve formátu: 128/82): ", i+1);
-        if (scanf("%d/%d", &sys[i], &dias[i]) != 2) {
-            printf("Neplatný vstup. Zkus to znovu.\n");
+        printf("Enter SYS/DIA (and optional HR) for day %d (e.g. 128/82 or 128/82 72): ", i+1);
+        int s, d, h;
+        int matched = scanf("%d/%d %d", &s, &d, &h);
+
+        if (matched == 2) {
+            sys[i] = s; dias[i] = d; hr[i] = 0;
+        }
+        else if (matched == 3) {
+            sys[i] = s; dias[i] = d; hr[i] = h;
+        }
+        else {
+            printf("Invalid input. Try again.\n");
             clear_stdin();
             i--;
             continue;
@@ -29,46 +54,53 @@ int main(void)
 
         if (sys[i] < 50)  sys[i] = 50;
         if (dias[i] < 30) dias[i] = 30;
+        if (hr[i] < 0) hr[i] = 0;
     }
 
     int count[5] = {0,0,0,0,0};
 
-    printf("\n=== Výsledky ===\n");
+    printf("\n=== Results ===\n");
     for (int i = 0; i < n; i++) {
-        printf("Den %02d: %3d/%d mmHg -> ", i+1, sys[i], dias[i]);
+
+        int pp = pulse_pressure(sys[i], dias[i]);
+        double map = mean_arterial_pressure(sys[i], dias[i]);
+
+        printf("Day %02d: %3d/%d mmHg", i+1, sys[i], dias[i]);
+        if (hr[i] > 0) printf(" (HR %d/min)", hr[i]);
+        printf(" -> ");
 
 
         if (sys[i] >= 180 || dias[i] >= 110) {
-            printf("III. stupeň hypertenze\n");
+            printf("Stage III Hypertension\n");
             count[4]++;
 
         } else if ((sys[i] >= 160 && sys[i] <= 179) ||
                    (dias[i] >= 100  && dias[i] <= 109)) {
-            printf("II.stupeň hypertenze\n");
+            printf("Stage II Hypertension\n");
             count[3]++;
 
         } else if ((sys[i] >= 140 && sys[i] <= 159) ||
-                   (dias[i] >= 90 && sys[i] <= 99)) {
-            printf("I.stupeň hypertenze\n");
+                   (dias[i] >= 90 && dias[i] <= 99)) {
+            printf("Stage I Hypertension\n");
             count[2]++;
 
         } else if ((sys[i] >= 130 && sys[i] <= 139) ||
-                    (dias[i] >= 85 && sys[i] <= 89)) {
-            printf("Vysoký normální tlak\n");
+                    (dias[i] >= 85 && dias[i] <= 89)) {
+            printf("High Normal Pressure\n");
             count[1]++;
 
         } else {
-            printf("Normalní tlak\n");
+            printf("Normal Pressure\n");
             count[0]++;
         }
     }
 
-    printf("\n === Souhrn měření === \n");
-    printf("Normální tlak: %d\n",          count[0]);
-    printf("Vysoký normální tlak: %d\n",   count[1]);
-    printf("I. stupeň hypertenze: %d\n",   count[2]);
-    printf("II. stupeň hypertenze: %d\n",  count[3]);
-    printf("III. stupeň hypertenze: %d\n", count[4]);
+    printf("\n === Summary of measurements === \n");
+    printf("Normal Pressure: %d\n",        count[0]);
+    printf("High Normal Pressure: %d\n",   count[1]);
+    printf("Stage I Hypertension: %d\n",   count[2]);
+    printf("Stage II Hypertension: %d\n",  count[3]);
+    printf("Stage III Hypertension: %d\n", count[4]);
 
     return 0;
 }
