@@ -69,30 +69,37 @@ int main(void)
         if (hr[i] > 0) printf(" (HR %d/min)", hr[i]);
         printf(" -> ");
 
+        const char *category = NULL;
+
 
         if (sys[i] >= 180 || dias[i] >= 110) {
-            printf("Stage III Hypertension\n");
+            category = "Stage III Hypertension";
             count[4]++;
 
-        } else if ((sys[i] >= 160 && sys[i] <= 179) ||
-                   (dias[i] >= 100  && dias[i] <= 109)) {
-            printf("Stage II Hypertension\n");
+        }
+        else if ((sys[i] >= 160 && sys[i] <= 179) ||
+                (dias[i] >= 100  && dias[i] <= 109)) {
+            category = "Stage II Hypertension";
             count[3]++;
 
-        } else if ((sys[i] >= 140 && sys[i] <= 159) ||
-                   (dias[i] >= 90 && dias[i] <= 99)) {
-            printf("Stage I Hypertension\n");
+        }
+        else if ((sys[i] >= 140 && sys[i] <= 159) ||
+                (dias[i] >= 90 && dias[i] <= 99)) {
+            category = "Stage I Hypertension";
             count[2]++;
 
-        } else if ((sys[i] >= 130 && sys[i] <= 139) ||
-                    (dias[i] >= 85 && dias[i] <= 89)) {
-            printf("High Normal Pressure\n");
+        }
+        else if ((sys[i] >= 130 && sys[i] <= 139) ||
+                (dias[i] >= 85 && dias[i] <= 89)) {
+            category = "High Normal Pressure";
             count[1]++;
 
-        } else {
-            printf("Normal Pressure\n");
+        }
+        else {
+            category = "Normal Pressure";
             count[0]++;
         }
+        printf("%s | PP=%d | MAP=%.1f\n", category, pp, map);
     }
 
     printf("\n === Summary of measurements === \n");
@@ -101,6 +108,37 @@ int main(void)
     printf("Stage I Hypertension: %d\n",   count[2]);
     printf("Stage II Hypertension: %d\n",  count[3]);
     printf("Stage III Hypertension: %d\n", count[4]);
+
+    // Saving results into a CSV file:
+     FILE *f = fopen("readings.csv", "w");
+     if (!f) {
+        printf("\nCould not open readings.csv for writing. \n");
+     }
+     else {
+        fprintf(f, "day,sys,dias,hr,pp,map,category\n");
+        for(int i = 0; i < n; i++) {
+            int pp = pulse_pressure(sys[i], dias[i]);
+            double map = mean_arterial_pressure(sys[i], dias[i]);
+            const char *cat;
+
+            if (sys[i] >= 180 || dias[i] >= 110)  cat = "Stage III Hypertension";
+            else if ((sys[i] >= 160 && sys[i] <= 179) ||
+                    (dias[i] >= 100  && dias[i] <= 109)) cat = "Stage II Hypertension";
+
+            else if ((sys[i] >= 140 && sys[i] <= 159) ||
+                    (dias[i] >= 90 && dias[i] <= 99)) cat = "Stage I Hypertension";
+
+            else if ((sys[i] >= 130 && sys[i] <= 139) ||
+                    (dias[i] >= 85 && dias[i] <= 89))  cat = "High Normal Pressure";
+           else                                        cat = "Normal Pressure";
+
+           fprintf(f, "%d,%d,%d,%d,%d,%.1f,%s\n",
+                    i+1, sys[i], dias[i], hr[i], pp, map, cat);
+        }
+        fclose(f);
+        printf("\nCSV file saved as 'readings.csv'. \n");
+
+     }
 
     return 0;
 }
